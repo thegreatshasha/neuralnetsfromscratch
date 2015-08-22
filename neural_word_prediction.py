@@ -10,19 +10,15 @@ from random import shuffle
 #loop form of fundamnetal eqns of backpropogation
 
 class Neural:
-	def __init__(self, layers, vocab):
+	def __init__(self, layers, vocab, num_words):
 		self.layers = np.array(layers)
-		self.word_length, self.num_words = layers[0]
 		self.vocab = vocab
+		self.num_words = num_words
+		self.word_length = self.layers[0]/self.num_words
 		
 		# Initialize weights
-		self.weights = [np.random.randn(self.num_words, self.layers[1], self.word_length)]
+		self.weights = [np.random.randn(layers[index+1], val) for index,val in enumerate(layers[:-1])]
 		 
-		for index in xrange(1, len(layers)-1): #l-1 weights
-			val = layers[index]
-			self.weights.append(np.random.randn(layers[index+1], val))
-		# weights[0] is a [layers[1] matrix*m]
-
 		# Initialize biases
 		self.biases = [np.random.randn(val, 1) for val in layers[1:]]
 		self.lookup_matrix = np.random.randn(len(self.vocab), self.word_length, 1)
@@ -37,35 +33,26 @@ class Neural:
 
 	def cross_entropy_cost(self, x, y):
 		print "Returns cross entropy cost"
+
+	def indexes_to_vector(self, input):
+		vectors = [self.word_vector(index) for index in input]
+		return np.concatenate(vectors)
 		
 
 	def feedforward(self, input):
-		# input is an array of word indexes like [1,250, 400]
+		# input is an array of word indexes like [1,250, 400]. These are joined to generate a big vector
 
-		# three step feedforward calculation
-		activation = np.zeros(self.biases[0].shape)
-		# first layer, for each word in input, lookup corresponding vector and calculate activations
-		for index, val in enumerate(input):
-			word_vec = self.word_vector(index)
-			word_vec_weights = self.weights[0][index]
+		activations = []
+		activation = self.indexes_to_vector(input)
+		activations.append(input)
+		
+		for index, value in enumerate(zip(self.weights, self.biases)):
 			#import pdb; pdb.set_trace()
-			activation = activation + np.dot(word_vec_weights, word_vec)
-
-		activation = sigmoid_vec(activation)
-		activations = [activation]
-		
-		# Middle layers calculate logistic normally
-		for index, value in enumerate(zip(self.weights[1:-1], self.biases[1:-1])):
 			weight, bias = value
-			activation = sigmoid_vec(np.dot(weight, activation) + bias)
+			nonlinear_method = sigmoid_vec if (index < len(self.biases) -1) else softmax_vec
+			activation = nonlinear_method(np.dot(weight, activation) + bias)
 			activations.append(activation)
-		
-		# Last layer, do sigmoid_vec calculation and return
-		activation = softmax_vec(np.dot(self.weights[-1], activation))
-		activations.append(activation)
-		
-		#import pdb; pdb.set_trace()
-
+		#print "I will propogate this input and return the activations"
 		return activations
 
 	def SGD(self, training_data, test_data, eta, epochs, batch_size):
@@ -135,7 +122,7 @@ class Neural:
 
 		# Do delta calculations for first layer
 
-		return (deltas, deltas_weights)
+		return (deltas, deltas_weights, deltas_input)
 
 
 	def evaluate(self, test_data):

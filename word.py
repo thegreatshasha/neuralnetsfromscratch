@@ -9,7 +9,7 @@ vocab = matrix['data']['vocab']
 
 sentences = [[vocab[i-1] for i in data] for data in test_data]
 
-nn = Neural([(50,3), 70, 250], vocab)
+nn = Neural([50*3, 70, 250], vocab, 3)
 output = nn.feedforward(training_data[0][:-1])
 import pdb; pdb.set_trace()
 #input = np.ones((784, 1))
