@@ -34,9 +34,14 @@ class Neural:
 	def cross_entropy_cost(self, x, y):
 		print "Returns cross entropy cost"
 
-	def indexes_to_vector(self, input):
-		vectors = [self.word_vector(index) for index in input]
+	def indexes_to_vector(self, indexes):
+		vectors = [self.word_vector(index) for index in indexes]
 		return np.concatenate(vectors)
+
+	def index_to_softmax_vector(self, index):
+		vector = np.zeros((250, 1))
+		vector[index-1] = 1
+		return vector
 		
 
 	def feedforward(self, input):
@@ -44,7 +49,7 @@ class Neural:
 
 		activations = []
 		activation = self.indexes_to_vector(input)
-		activations.append(input)
+		activations.append(activation)
 		
 		for index, value in enumerate(zip(self.weights, self.biases)):
 			#import pdb; pdb.set_trace()
@@ -78,13 +83,13 @@ class Neural:
 
 	def update_mini_batch(self, batch, batch_size, eta):
 
-		#print "Run backpropogation on each bach and calculate avg deltas in weights and biases and then update them"
+		print "Run backpropogation on each bach and calculate avg deltas in weights and biases and then update them"
 		#variables for summing deltas
 		deltas_avg = [0] * (len(self.layers) - 1)
 		deltas_weights_avg = [0] * (len(self.layers) - 1)
 
 		for data in batch:
-			deltas, deltas_weights = self.backpropogate(data[0], data[1])
+			deltas, deltas_weights, delta_input = self.backpropogate(data[0:-1], data[-1])
 			# iterate and average deltas
 			for i, delta in enumerate(deltas_avg):
 				deltas_avg[i] = deltas_avg[i] + deltas[i]/batch_size
@@ -104,23 +109,22 @@ class Neural:
 		activations = self.feedforward(x)
 		deltas = [0] * (len(self.layers) - 1)
 		deltas_weights = [0] * (len(self.layers) - 1)
-		# No need for delta_biases since it's equivalent to deltas
-
-		# Do delta calculation for last layer
-
+		y = self.index_to_softmax_vector(y)		
 		# Multiply gradient with sigmoid derivative to calculate error
-		error = self.gradient(activations[-1], y) * (activations[-1]*(1-activations[-1]))
+		error = self.gradient(activations[-1], y)
 
 		deltas[-1] = error
 		deltas_weights[-1] = np.dot(deltas[-1], np.transpose(activations[-2]))
 
-		# Go back layer by layer and calculate delta for middle layers
+		# Go back layer by layer and calculate delta for other layers
 		for index in xrange(1, len(self.layers) - 1):
 			#print index, deltas[-index-1]
 			deltas[-index-1] = np.dot(np.transpose(self.weights[-index]), deltas[-index]) * (activations[-index-1]*(1-activations[-index-1]))
 			deltas_weights[-index-1] = np.dot(deltas[-index-1], np.transpose(activations[-index-2]))
 
+
 		# Do delta calculations for first layer
+		deltas_input = np.dot(np.transpose(self.weights[0]), deltas[0])
 
 		return (deltas, deltas_weights, deltas_input)
 
