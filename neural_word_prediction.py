@@ -73,7 +73,7 @@ class Neural:
 			shuffle(training_data)
 
 			for i in xrange(0, len(training_data), batch_size):
-				print "Running batch {}/{}".format(i/batch_size												, len(training_data)/batch_size)
+				#print "Running batch {}/{}".format(i/batch_size												, len(training_data)/batch_size)
 
 				batch = training_data[i:i+batch_size]
 
