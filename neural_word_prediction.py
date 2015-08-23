@@ -87,9 +87,11 @@ class Neural:
 		#variables for summing deltas
 		deltas_avg = [0] * (len(self.layers) - 1)
 		deltas_weights_avg = [0] * (len(self.layers) - 1)
+		deltas_lookup_matrix = np.zeros(self.lookup_matrix.shape).shape
 
 		for data in batch:
 			deltas, deltas_weights, delta_input = self.backpropogate(data[0:-1], data[-1])
+			import pdb; pdb.set_trace()
 			# iterate and average deltas
 			for i, delta in enumerate(deltas_avg):
 				deltas_avg[i] = deltas_avg[i] + deltas[i]/batch_size

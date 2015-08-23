@@ -58,17 +58,9 @@ class Neural:
 		for data in batch:
 			deltas, deltas_weights = self.backpropogate(data[0], data[1])
 			# iterate and average deltas
-			for i, delta in enumerate(deltas_avg):
-				deltas_avg[i] = deltas_avg[i] + deltas[i]/batch_size
-
-				#iterate and average 
-				deltas_weights_avg[i] = deltas_weights_avg[i] + deltas_weights[i]/batch_size
-
-		# Change internal weights and biases with this averaged data
-		for i, delta in enumerate(deltas_avg):
-			#import pdb; pdb.set_trace()
-			self.weights[i] = self.weights[i] - eta * deltas_weights_avg[i]
-			self.biases[i] = self.biases[i] - eta * deltas_avg[i] #deltas are same as bias
+			for i, delta in enumerate(deltas):
+				self.weights[i] = self.weights[i] - eta * deltas_weights[i]/batch_size
+				self.biases[i] = self.biases[i] - eta * deltas[i]/batch_size
 
 	def backpropogate(self, x, y):
 		#print "Do one feedforward pass and calculate errors"
