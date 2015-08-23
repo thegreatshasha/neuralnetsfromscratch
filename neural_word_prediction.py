@@ -42,7 +42,11 @@ class Neural:
 		vector = np.zeros((250, 1))
 		vector[index-1] = 1
 		return vector
-		
+
+	def update_lookup_matrix(self, indexes, delta_input, batch_size, eta):
+		for i, index in enumerate(indexes):
+			self.lookup_matrix[index-1] = self.lookup_matrix[index-1] - eta*delta_input[i:i+self.word_length]/batch_size
+
 
 	def feedforward(self, input):
 		# input is an array of word indexes like [1,250, 400]. These are joined to generate a big vector
@@ -69,7 +73,7 @@ class Neural:
 			shuffle(training_data)
 
 			for i in xrange(0, len(training_data), batch_size):
-				#print "Running batch {}/{}".format(i/batch_size												, len(training_data)/batch_size)
+				print "Running batch {}/{}".format(i/batch_size												, len(training_data)/batch_size)
 
 				batch = training_data[i:i+batch_size]
 
@@ -83,27 +87,24 @@ class Neural:
 
 	def update_mini_batch(self, batch, batch_size, eta):
 
-		print "Run backpropogation on each bach and calculate avg deltas in weights and biases and then update them"
+		#print "Run backpropogation on each bach and calculate avg deltas in weights and biases and then update them"
 		#variables for summing deltas
 		deltas_avg = [0] * (len(self.layers) - 1)
 		deltas_weights_avg = [0] * (len(self.layers) - 1)
 		deltas_lookup_matrix = np.zeros(self.lookup_matrix.shape).shape
 
-		for data in batch:
+		for i, data in enumerate(batch):
+			#print "Batch: {}/{}".format(i+1, batch_size)
 			deltas, deltas_weights, delta_input = self.backpropogate(data[0:-1], data[-1])
-			import pdb; pdb.set_trace()
+			
+			# update lookup table
+			self.update_lookup_matrix(data[0:-1], delta_input, batch_size, eta)
+
 			# iterate and average deltas
-			for i, delta in enumerate(deltas_avg):
-				deltas_avg[i] = deltas_avg[i] + deltas[i]/batch_size
+			for i, delta in enumerate(deltas):
+				self.weights[i] = self.weights[i] - eta * deltas_weights[i]/batch_size
+				self.biases[i] = self.biases[i] - eta * deltas[i]/batch_size
 
-				#iterate and average 
-				deltas_weights_avg[i] = deltas_weights_avg[i] + deltas_weights[i]/batch_size
-
-		# Change internal weights and biases with this averaged data
-		for i, delta in enumerate(deltas_avg):
-			#import pdb; pdb.set_trace()
-			self.weights[i] = self.weights[i] - eta * deltas_weights_avg[i]
-			self.biases[i] = self.biases[i] - eta * deltas_avg[i] #deltas are same as bias
 
 	def backpropogate(self, x, y):
 		#print "Do one feedforward pass and calculate errors"
@@ -137,9 +138,10 @@ class Neural:
 
 		for i, data in enumerate(test_data):
 			#import pdb; pdb.set_trace()
-			activations = self.feedforward(data[0])
+			activations = self.feedforward(data[:-1])
+			word_index = np.argmax(activations[-1])
 			#import pdb; pdb.set_trace()
-			result = (np.argmax(activations[-1]) == data[1])
+			result =  (word_index+1 == data[-1])
 			if(result == True):
 				count += 1
 				#print "{}/{}: {}".format(i, len(test_data), data[1])
