@@ -4,6 +4,7 @@
 import numpy as np
 from helpers import sigmoid_vec, sigmoid_prime_vec, softmax_vec
 from random import shuffle
+import heapq
 
 #feedforward, SGD, update_mini_batch, backwardspropogation
 
@@ -139,9 +140,12 @@ class Neural:
 		for i, data in enumerate(test_data):
 			#import pdb; pdb.set_trace()
 			activations = self.feedforward(data[:-1])
-			word_index = np.argmax(activations[-1])
 			#import pdb; pdb.set_trace()
-			result =  (word_index+1 == data[-1])
+			#word_index = np.argmax(activations[-1])
+			top_indexes = heapq.nlargest(5, range(len(activations[-1])), activations[-1].take)
+			#import pdb; pdb.set_trace()
+			result =  (data[-1] - 1) in top_indexes
+			#result =  (word_index+1 == data[-1])
 			if(result == True):
 				count += 1
 				#print "{}/{}: {}".format(i, len(test_data), data[1])
